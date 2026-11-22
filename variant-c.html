@@ -18,10 +18,19 @@
   }
   .closed-book img { width: 100%; display: block; }
 
+  /* topbar + category nav stick together as one unit, so neither has to
+     guess the other's height (which changes when the topbar wraps on
+     narrow screens) */
+  .sticky-head {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .sticky-head .topbar { position: static; }
+
   /* ---------- category quick-jump nav ---------- */
   .cat-nav {
-    position: sticky;
-    top: 64px;
+    position: static;
     z-index: 40;
     display: flex;
     gap: 8px;
@@ -176,29 +185,33 @@
     .page, .page-slot.right .face { padding: 12px 10px 10px; }
     .page .caption, .page-slot.right .face .caption { font-size: 0.74rem; margin-top: 8px; }
     .spine { width: 10px; }
-    .cat-nav { top: 56px; }
+  }
+
+  @media (max-width: 460px) {
+    .pages-wrap { width: calc(100vw - 56px); }
   }
 </style>
 </head>
 <body data-lang="fr" data-service="photography">
 
-<div class="topbar" id="top">
-  <a class="brand" href="#top">Extra Visuals</a>
-  <div class="services">
-    <button class="svc-btn" data-svc="photography" aria-pressed="true">
-      <span class="fr">Photographie</span><span class="en">Photography</span>
-    </button>
-    <button class="svc-btn" data-svc="video">
-      <span class="fr">Vidéo</span><span class="en">Video</span>
-    </button>
-    <button class="svc-btn" data-svc="both">
-      <span class="fr">Les deux</span><span class="en">Both</span>
-    </button>
+<div class="sticky-head" id="top">
+  <div class="topbar">
+    <a class="brand" href="#top">Extra Visuals</a>
+    <div class="services">
+      <button class="svc-btn" data-svc="photography" aria-pressed="true">
+        <span class="fr">Photographie</span><span class="en">Photography</span>
+      </button>
+      <button class="svc-btn" data-svc="video">
+        <span class="fr">Vidéo</span><span class="en">Video</span>
+      </button>
+      <button class="svc-btn" data-svc="both">
+        <span class="fr">Les deux</span><span class="en">Both</span>
+      </button>
+    </div>
+    <button class="lang-toggle" id="langBtn">EN</button>
   </div>
-  <button class="lang-toggle" id="langBtn">EN</button>
+  <div class="cat-nav" id="catNav"></div>
 </div>
-
-<div class="cat-nav" id="catNav"></div>
 
 <main id="decks"></main>
 
