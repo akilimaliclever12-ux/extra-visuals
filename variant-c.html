@@ -172,6 +172,8 @@
     opacity: 0; pointer-events: none;
   }
 
+  .lightbox-trigger { cursor: pointer; touch-action: manipulation; }
+
   .lightbox {
     position: fixed; inset: 0; z-index: 200;
     background: rgba(0,0,0,0.92);
@@ -269,11 +271,21 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeLightbox();
   });
+  // Delegated at the document level (rather than an inline handler on each
+  // <img>) because the right-hand page lives inside a rotating 3D element —
+  // some mobile browsers don't reliably hit-test taps on elements nested
+  // inside an actively-transformed 3D ancestor. A listener up at the
+  // document root sidesteps that: it only needs the tap to bubble, not to
+  // land pixel-precisely on a transformed node.
+  document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('.lightbox-trigger');
+    if (trigger) openLightbox(trigger.dataset.lightboxSrc);
+  });
 
   function pageInner(entry) {
     let thumb;
     if (entry.img) {
-      thumb = `<img src="${entry.img}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;" onclick="event.stopPropagation(); openLightbox('${entry.img}')" />`;
+      thumb = `<img src="${entry.img}" alt="" loading="lazy" class="lightbox-trigger" data-lightbox-src="${entry.img}" style="width:100%;height:100%;object-fit:cover;display:block;" />`;
     } else {
       const bg = gradientFor(entry.seed);
       thumb = entry.kind === 'video'
