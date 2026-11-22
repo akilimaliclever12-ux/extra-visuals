@@ -1,0 +1,205 @@
+<title>Photo Deck Reveal</title>
+<link rel="stylesheet" href="shared/style.css" />
+<style>
+  .deck { position: relative; }
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .stage .cat-label {
+    position: absolute;
+    top: 90px;
+    left: max(32px, env(safe-area-inset-left, 0px));
+  }
+  .stack {
+    position: relative;
+    width: min(420px, 82vw);
+    height: min(560px, 62vh);
+  }
+  .stack .card {
+    position: absolute;
+    inset: 0;
+    will-change: transform, opacity;
+    transition: box-shadow 0.2s;
+  }
+  .variant-tag {
+    position: fixed; bottom: 16px; right: 16px; z-index: 60;
+    font-size: 0.72rem; color: var(--muted);
+    border: 1px dashed var(--muted); padding: 6px 10px; border-radius: 8px;
+    background: rgba(18,18,18,0.8);
+  }
+</style>
+
+<script>
+  document.body.dataset.lang = 'fr';
+  document.body.dataset.service = 'photography';
+</script>
+
+<div class="topbar">
+  <a class="brand" href="#top">Extra Visuals</a>
+  <div class="services">
+    <button class="svc-btn" data-svc="photography" aria-pressed="true">
+      <span class="fr">Photographie</span><span class="en">Photography</span>
+    </button>
+    <button class="svc-btn" data-svc="video">
+      <span class="fr">Vidéo</span><span class="en">Video</span>
+    </button>
+    <button class="svc-btn" data-svc="both">
+      <span class="fr">Les deux</span><span class="en">Both</span>
+    </button>
+  </div>
+  <button class="lang-toggle" id="langBtn">EN</button>
+</div>
+
+<div id="top" class="hero">
+  <div class="kicker fr">Votre événement, raconté avec soin</div>
+  <div class="kicker en">Your event, told with care</div>
+  <h1>
+    <span class="fr">Photo & Vidéo pour vos plus grands moments</span>
+    <span class="en">Photo & Video for your biggest moments</span>
+  </h1>
+  <p><span class="fr">Faites défiler — chaque carte se détache pour révéler la suivante.</span>
+     <span class="en">Scroll — each card peels away to reveal the next.</span></p>
+  <div class="scroll-hint"><span class="fr">Défiler</span><span class="en">Scroll</span></div>
+</div>
+
+<main id="decks"></main>
+
+<div class="site-footer">
+  <p class="fr">Prototype d'animation — aucune réservation réelle n'est enregistrée ici.</p>
+  <p class="en">Animation prototype — no real booking is recorded here.</p>
+</div>
+
+<div class="variant-tag">Variante A — Pile de cartes / Card peel</div>
+
+<script src="shared/data.js"></script>
+<script>
+  const root = document.getElementById('decks');
+
+  function buildDeck(service, cat, catIndex, catTotal) {
+    const items = itemsFor(cat, 3);
+    const deck = document.createElement('section');
+    deck.className = 'deck';
+    deck.dataset.svcSection = service;
+    deck.style.height = `${items.length * 95}vh`;
+
+    const stage = document.createElement('div');
+    stage.className = 'stage';
+
+    const label = document.createElement('div');
+    label.className = 'cat-label';
+    label.innerHTML = `<span class="idx">${catIndex + 1}/${catTotal}</span> <span class="fr">${cat.fr}</span><span class="en">${cat.en}</span>`;
+    stage.appendChild(label);
+
+    const stack = document.createElement('div');
+    stack.className = 'stack';
+
+    items.forEach((item, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.zIndex = items.length - i;
+      card.dataset.i = i;
+
+      const bg = gradientFor(item.seed);
+      if (item.kind === 'video') {
+        card.innerHTML = `<div class="video-thumb" style="background:${bg}"><div class="play"></div></div>`;
+      } else {
+        card.innerHTML = `<div class="photo-thumb" style="background:${bg}"><div class="camera"></div></div>`;
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <button class="cta primary" onclick="location.href='booking.html'">
+          <span class="fr">${STRINGS.fr.bookNow}</span><span class="en">${STRINGS.en.bookNow}</span>
+        </button>
+        <button class="cta ghost" onclick="location.href='booking.html'">
+          <span class="fr">${STRINGS.fr.checkAvail}</span><span class="en">${STRINGS.en.checkAvail}</span>
+        </button>
+      `;
+      card.appendChild(overlay);
+      stack.appendChild(card);
+    });
+
+    stage.appendChild(stack);
+    deck.appendChild(stage);
+    return deck;
+  }
+
+  function render(service) {
+    root.innerHTML = '';
+    const services = service === 'both' ? ['photography', 'video'] : [service];
+    services.forEach((svc) => {
+      CATEGORIES[svc].forEach((cat, i) => {
+        root.appendChild(buildDeck(svc, cat, i, CATEGORIES[svc].length));
+      });
+    });
+    updateStacks();
+  }
+
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  function updateStacks() {
+    document.querySelectorAll('.deck').forEach((deck) => {
+      const rect = deck.getBoundingClientRect();
+      const total = rect.height - window.innerHeight;
+      const scrolled = clamp(-rect.top, 0, Math.max(total, 1));
+      const progress = total > 0 ? scrolled / total : 0;
+
+      const cards = deck.querySelectorAll('.card');
+      const n = cards.length;
+      const pos = progress * n;
+      const current = Math.floor(clamp(pos, 0, n - 0.0001));
+
+      cards.forEach((card) => {
+        const idx = Number(card.dataset.i);
+        if (idx < current) {
+          card.style.transform = `translateY(-130%) rotate(-12deg)`;
+          card.style.opacity = '0';
+        } else if (idx === current) {
+          const local = clamp(pos - current, 0, 1);
+          card.style.transform = `translateY(${-130 * local}%) rotate(${-12 * local}deg)`;
+          card.style.opacity = `${1 - local}`;
+        } else {
+          const depth = idx - current;
+          card.style.transform = `translateY(${depth * 10}px) scale(${1 - depth * 0.035})`;
+          card.style.opacity = '1';
+        }
+      });
+    });
+  }
+
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => { updateStacks(); ticking = false; });
+      ticking = true;
+    }
+  });
+  window.addEventListener('resize', updateStacks);
+
+  document.querySelectorAll('.svc-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.svc-btn').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      document.body.setAttribute('data-service', btn.dataset.svc);
+      render(btn.dataset.svc);
+      document.getElementById('top').scrollIntoView({ behavior: 'instant', block: 'start' });
+    });
+  });
+
+  document.getElementById('langBtn').addEventListener('click', () => {
+    const b = document.body;
+    const next = b.getAttribute('data-lang') === 'fr' ? 'en' : 'fr';
+    b.setAttribute('data-lang', next);
+    document.getElementById('langBtn').textContent = next === 'fr' ? 'EN' : 'FR';
+  });
+
+  render('photography');
+</script>

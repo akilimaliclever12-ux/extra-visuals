@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Studio — Variante B (Pile qui s'ordonne)</title>
+<link rel="stylesheet" href="shared/style.css" />
+<style>
+  .section { padding: 60px 24px 20px; }
+  .section .cat-label { margin-bottom: 28px; justify-content: center; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .grid .card {
+    width: 100%;
+    aspect-ratio: 3/4;
+    opacity: 0;
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease;
+  }
+  .grid .card.settled {
+    transform: none !important;
+    opacity: 1;
+  }
+  .variant-tag {
+    position: fixed; bottom: 16px; right: 16px; z-index: 60;
+    font-size: 0.72rem; color: var(--muted);
+    border: 1px dashed var(--muted); padding: 6px 10px; border-radius: 8px;
+    background: rgba(18,18,18,0.8);
+  }
+</style>
+</head>
+<body data-lang="fr" data-service="photography">
+
+<div class="topbar">
+  <a class="brand" href="#top">Extra Visuals</a>
+  <div class="services">
+    <button class="svc-btn" data-svc="photography" aria-pressed="true">
+      <span class="fr">Photographie</span><span class="en">Photography</span>
+    </button>
+    <button class="svc-btn" data-svc="video">
+      <span class="fr">Vidéo</span><span class="en">Video</span>
+    </button>
+    <button class="svc-btn" data-svc="both">
+      <span class="fr">Les deux</span><span class="en">Both</span>
+    </button>
+  </div>
+  <button class="lang-toggle" id="langBtn">EN</button>
+</div>
+
+<div id="top" class="hero">
+  <div class="kicker fr">Votre événement, raconté avec soin</div>
+  <div class="kicker en">Your event, told with care</div>
+  <h1>
+    <span class="fr">Photo & Vidéo pour vos plus grands moments</span>
+    <span class="en">Photo & Video for your biggest moments</span>
+  </h1>
+  <p><span class="fr">Faites défiler — chaque pile de photos s'ordonne en grille.</span>
+     <span class="en">Scroll — each pile of photos settles into a grid.</span></p>
+  <div class="scroll-hint"><span class="fr">Défiler</span><span class="en">Scroll</span></div>
+</div>
+
+<main id="sections"></main>
+
+<div class="site-footer">
+  <p class="fr">Prototype d'animation — aucune réservation réelle n'est enregistrée ici.</p>
+  <p class="en">Animation prototype — no real booking is recorded here.</p>
+</div>
+
+<div class="variant-tag">Variante B — Pile → grille / Pile settles into grid</div>
+
+<script src="shared/data.js"></script>
+<script>
+  const root = document.getElementById('sections');
+
+  function randomPileTransform() {
+    const rot = (Math.random() * 16 - 8).toFixed(1);
+    const dx = (Math.random() * 40 - 20).toFixed(0);
+    const dy = (Math.random() * 30 + 10).toFixed(0);
+    return `translate(${dx}px, ${dy}px) rotate(${rot}deg) scale(0.92)`;
+  }
+
+  function buildSection(service, cat, catIndex, catTotal) {
+    const items = itemsFor(cat, 3);
+    const section = document.createElement('section');
+    section.className = 'section';
+
+    const label = document.createElement('div');
+    label.className = 'cat-label';
+    label.innerHTML = `<span class="idx">${catIndex + 1}/${catTotal}</span> <span class="fr">${cat.fr}</span><span class="en">${cat.en}</span>`;
+    section.appendChild(label);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    items.forEach((item, i) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.transform = randomPileTransform();
+      card.style.transitionDelay = `${i * 90}ms`;
+
+      const bg = gradientFor(item.seed);
+      if (item.kind === 'video') {
+        card.innerHTML = `<div class="video-thumb" style="background:${bg}"><div class="play"></div></div>`;
+      } else {
+        card.innerHTML = `<div class="photo-thumb" style="background:${bg}"><div class="camera"></div></div>`;
+      }
+
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      overlay.innerHTML = `
+        <button class="cta primary" onclick="location.href='booking.html'">
+          <span class="fr">${STRINGS.fr.bookNow}</span><span class="en">${STRINGS.en.bookNow}</span>
+        </button>
+        <button class="cta ghost" onclick="location.href='booking.html'">
+          <span class="fr">${STRINGS.fr.checkAvail}</span><span class="en">${STRINGS.en.checkAvail}</span>
+        </button>
+      `;
+      card.appendChild(overlay);
+      grid.appendChild(card);
+    });
+
+    section.appendChild(grid);
+    return section;
+  }
+
+  let observer;
+  function render(service) {
+    root.innerHTML = '';
+    const services = service === 'both' ? ['photography', 'video'] : [service];
+    services.forEach((svc) => {
+      CATEGORIES[svc].forEach((cat, i) => {
+        root.appendChild(buildSection(svc, cat, i, CATEGORIES[svc].length));
+      });
+    });
+
+    if (observer) observer.disconnect();
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.card').forEach((c) => c.classList.add('settled'));
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
+
+    root.querySelectorAll('.section').forEach((s) => observer.observe(s));
+  }
+
+  document.querySelectorAll('.svc-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.svc-btn').forEach((b) => b.setAttribute('aria-pressed', 'false'));
+      btn.setAttribute('aria-pressed', 'true');
+      document.body.setAttribute('data-service', btn.dataset.svc);
+      render(btn.dataset.svc);
+      document.getElementById('top').scrollIntoView({ behavior: 'instant', block: 'start' });
+    });
+  });
+
+  document.getElementById('langBtn').addEventListener('click', () => {
+    const b = document.body;
+    const next = b.getAttribute('data-lang') === 'fr' ? 'en' : 'fr';
+    b.setAttribute('data-lang', next);
+    document.getElementById('langBtn').textContent = next === 'fr' ? 'EN' : 'FR';
+  });
+
+  render('photography');
+</script>
+</body>
+</html>

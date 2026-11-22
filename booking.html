@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Réservation / Booking</title>
+<link rel="stylesheet" href="shared/style.css" />
+<style>
+  .wrap { max-width: 760px; margin: 0 auto; padding: 120px 24px 80px; }
+  .back { color: var(--gold-soft); font-size: 0.85rem; }
+  .panel {
+    background: var(--panel);
+    border-radius: 18px;
+    padding: 28px;
+    margin-top: 24px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .cal {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-top: 16px;
+  }
+  .day {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    background: rgba(255,255,255,0.04);
+    transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+    animation: dayIn 0.35s ease backwards;
+  }
+  @keyframes dayIn {
+    from { opacity: 0; transform: translateY(4px) scale(0.92); }
+    to { opacity: 1; transform: none; }
+  }
+  .day.avail { background: rgba(201,162,101,0.18); color: var(--gold-soft); cursor: pointer; }
+  .day.avail:hover { transform: translateY(-2px) scale(1.06); background: rgba(201,162,101,0.3); }
+  .day.pending { background: rgba(230,180,60,0.18); color: #e6b43c; }
+  .day.booked { background: rgba(255,255,255,0.03); color: var(--muted); text-decoration: line-through; }
+  .day.selected {
+    background: var(--gold); color: #1a1405; font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(201,162,101,0.35);
+    transform: scale(1.08);
+  }
+  .legend { display: flex; gap: 18px; margin-top: 14px; font-size: 0.78rem; color: var(--muted); flex-wrap: wrap; }
+  .legend span::before { content: "●"; margin-right: 6px; }
+  .legend .l-avail::before { color: var(--gold-soft); }
+  .legend .l-pending::before { color: #e6b43c; }
+  .legend .l-booked::before { color: var(--muted); }
+  form { display: grid; gap: 14px; margin-top: 20px; }
+  label { font-size: 0.82rem; color: var(--muted); display: block; margin-bottom: 6px; }
+  input, select, textarea {
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.03); color: var(--cream);
+    font-family: 'Inter', sans-serif;
+  }
+  select option { background: var(--ink); color: var(--cream); }
+  .notice {
+    margin-top: 16px; padding: 14px; border-radius: 10px;
+    background: rgba(201,162,101,0.1); border: 1px solid rgba(201,162,101,0.3);
+    font-size: 0.85rem; color: var(--gold-soft);
+    animation: dayIn 0.3s ease;
+  }
+  .submit-btn { margin-top: 6px; }
+  .stub-tag {
+    display: inline-block; margin-top: 24px; font-size: 0.72rem;
+    color: var(--muted); border: 1px dashed var(--muted); padding: 6px 10px; border-radius: 8px;
+  }
+  .terms-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 0.82rem; color: var(--muted);
+  }
+  .terms-row input[type="checkbox"] {
+    width: 18px; height: 18px; margin-top: 2px; accent-color: var(--gold); flex-shrink: 0;
+  }
+  .terms-link {
+    color: var(--gold-soft); text-decoration: underline; cursor: pointer; background: none; border: none;
+    font-size: inherit; padding: 0; font-family: inherit;
+  }
+  .terms-box {
+    display: none;
+    margin-top: 12px; padding: 14px; border-radius: 10px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.8rem; color: var(--muted); line-height: 1.6; max-height: 220px; overflow-y: auto;
+  }
+  .terms-box.open { display: block; }
+</style>
+</head>
+<body data-lang="fr">
+
+<div class="topbar">
+  <a class="brand" href="variant-c.html">Extra Visuals</a>
+  <button class="lang-toggle" id="langBtn">EN</button>
+</div>
+
+<div class="wrap">
+  <a class="back" href="javascript:history.back()">
+    <span class="fr">← Retour aux réalisations</span>
+    <span class="en">← Back to showcase</span>
+  </a>
+
+  <h1 style="margin-top:16px;">
+    <span class="fr">Vérifier disponibilité & Réserver</span>
+    <span class="en">Check availability & Book</span>
+  </h1>
+  <p style="color:var(--muted); margin-top:8px;">
+    <span class="fr">Choisissez une date disponible, puis complétez vos informations. Une consultation préalable (WhatsApp, Lumitel, Airtel) est recommandée avant de réserver.</span>
+    <span class="en">Pick an available date, then fill in your details. A prior consultation (WhatsApp, Lumitel, Airtel) is recommended before booking.</span>
+  </p>
+
+  <div class="panel">
+    <h3>
+      <span class="fr">Disponibilité — Décembre</span>
+      <span class="en">Availability — December</span>
+    </h3>
+    <div class="cal" id="cal"></div>
+    <div class="legend">
+      <span class="l-avail"><span class="fr">Disponible</span><span class="en">Available</span></span>
+      <span class="l-pending"><span class="fr">En attente de confirmation</span><span class="en">Pending confirmation</span></span>
+      <span class="l-booked"><span class="fr">Réservé</span><span class="en">Booked</span></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>
+      <span class="fr">Vos informations</span>
+      <span class="en">Your details</span>
+    </h3>
+    <form id="bookingForm">
+      <div>
+        <label><span class="fr">Nom complet</span><span class="en">Full name</span></label>
+        <input type="text" required />
+      </div>
+      <div>
+        <label><span class="fr">Téléphone (WhatsApp / Lumitel / Airtel)</span><span class="en">Phone (WhatsApp / Lumitel / Airtel)</span></label>
+        <input type="tel" required />
+      </div>
+      <div>
+        <label>Email</label>
+        <input type="email" required />
+      </div>
+      <div>
+        <label><span class="fr">Occasion</span><span class="en">Occasion</span></label>
+        <select id="occasionSelect" required>
+          <option value="" disabled selected data-fr="Choisir..." data-en="Choose...">Choisir...</option>
+          <option value="graduation" data-fr="Remise des diplômes" data-en="Graduation">Remise des diplômes</option>
+          <option value="wedding" data-fr="Mariage" data-en="Wedding">Mariage</option>
+          <option value="outing" data-fr="Sortie" data-en="Outing">Sortie</option>
+          <option value="nature" data-fr="Nature" data-en="Nature">Nature</option>
+          <option value="podcast" data-fr="Podcast" data-en="Podcast">Podcast</option>
+          <option value="promo" data-fr="Promotion produit" data-en="Product promotion">Promotion produit</option>
+          <option value="other" data-fr="Autre occasion" data-en="Other occasion">Autre occasion</option>
+        </select>
+      </div>
+      <div>
+        <label><span class="fr">Date sélectionnée</span><span class="en">Selected date</span></label>
+        <input type="text" id="selectedDate" placeholder="—" readonly />
+      </div>
+      <div>
+        <label><span class="fr">Capture d'écran du paiement (acompte 50%)</span><span class="en">Payment screenshot (50% deposit)</span></label>
+        <input type="file" accept="image/*" />
+      </div>
+
+      <div class="terms-row">
+        <input type="checkbox" id="termsCheck" required />
+        <label for="termsCheck" style="margin:0;">
+          <span class="fr">J'accepte les <button type="button" class="terms-link" id="termsLink">conditions générales</button> de réservation.</span>
+          <span class="en">I accept the <button type="button" class="terms-link" id="termsLink2">booking terms & conditions</button>.</span>
+        </label>
+      </div>
+      <div class="terms-box" id="termsBox">
+        <p class="fr">1. Un acompte de 50% est requis pour confirmer toute réservation. 2. La réservation reste « en attente » jusqu'à vérification du paiement par le propriétaire. 3. Les annulations moins de 7 jours avant l'événement ne sont pas remboursables. 4. La date reste bloquée dès la création de la demande, même en attente, pour éviter tout double-booking. 5. Le solde restant est dû le jour de l'événement.</p>
+        <p class="en">1. A 50% deposit is required to confirm any booking. 2. The booking stays "pending" until the owner verifies payment. 3. Cancellations within 7 days of the event are non-refundable. 4. The date is held as soon as a request is created, even while pending, to prevent double-booking. 5. The remaining balance is due on the day of the event.</p>
+      </div>
+
+      <button class="cta primary submit-btn" type="submit">
+        <span class="fr">Envoyer la demande</span>
+        <span class="en">Send request</span>
+      </button>
+    </form>
+
+    <div class="notice" id="resultNotice" style="display:none;">
+      <span class="fr">Merci ! Votre créneau est <strong>en attente</strong> — il sera confirmé dès que le propriétaire valide votre acompte.</span>
+      <span class="en">Thank you! Your slot is <strong>pending</strong> — it will be confirmed once the owner verifies your deposit.</span>
+    </div>
+  </div>
+
+  <div class="stub-tag">
+    <span class="fr">Maquette — aucune donnée n'est réellement enregistrée. Logique de réservation à venir.</span>
+    <span class="en">Mockup — no data is actually saved. Real booking logic coming next.</span>
+  </div>
+</div>
+
+<script>
+  document.getElementById('langBtn').addEventListener('click', () => {
+    const b = document.body;
+    const next = b.getAttribute('data-lang') === 'fr' ? 'en' : 'fr';
+    b.setAttribute('data-lang', next);
+    document.getElementById('langBtn').textContent = next === 'fr' ? 'EN' : 'FR';
+    document.querySelectorAll('#occasionSelect option').forEach((opt) => {
+      const label = opt.dataset[next];
+      if (label) opt.textContent = label;
+    });
+  });
+
+  ['termsLink', 'termsLink2'].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener('click', () => document.getElementById('termsBox').classList.toggle('open'));
+  });
+
+  document.getElementById('bookingForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    document.getElementById('resultNotice').style.display = 'block';
+    document.getElementById('resultNotice').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // fake calendar: Dec 2026, 31 days, random mix of states
+  const cal = document.getElementById('cal');
+  const states = [];
+  for (let d = 1; d <= 31; d++) {
+    const r = Math.random();
+    states.push(r < 0.15 ? 'booked' : r < 0.25 ? 'pending' : 'avail');
+  }
+  states.forEach((st, i) => {
+    const d = document.createElement('div');
+    d.className = 'day ' + st;
+    d.style.animationDelay = `${i * 15}ms`;
+    d.textContent = i + 1;
+    if (st === 'avail') {
+      d.addEventListener('click', () => {
+        document.querySelectorAll('.day.selected').forEach((el) => el.classList.remove('selected'));
+        d.classList.add('selected');
+        document.getElementById('selectedDate').value = `${i + 1} décembre 2026`;
+      });
+    }
+    cal.appendChild(d);
+  });
+</script>
+</body>
+</html>
