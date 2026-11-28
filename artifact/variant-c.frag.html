@@ -57,6 +57,16 @@
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     overflow: hidden;
   }
+  .stage::before {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: min(1000px, 95vw);
+    height: min(760px, 85vh);
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255,196,110,0.09), transparent 70%);
+    pointer-events: none;
+  }
 
   .book-cover {
     position: relative;

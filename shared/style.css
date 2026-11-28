@@ -13,10 +13,22 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  background: var(--ink);
+  background: radial-gradient(ellipse 80% 55% at 50% 28%, #1e1711 0%, #15110d 45%, #09080a 100%);
   color: var(--cream);
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
+}
+/* a faint grain over the vignette so large dark areas read as rich
+   rather than flat and empty */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 h1, h2, h3 { font-family: 'Playfair Display', serif; margin: 0; }
 
