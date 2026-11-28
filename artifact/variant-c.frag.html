@@ -260,6 +260,8 @@
   document.body.dataset.service = 'photography';
 </script>
 
+<div class="bg-grid" id="bgGrid" aria-hidden="true"></div>
+
 <div class="sticky-head" id="top">
   <div class="topbar">
     <a class="brand" href="#top">Extra Visuals</a>
@@ -296,6 +298,14 @@
 
 <script src="shared/data.js"></script>
 <script>
+  (function populateBgGrid() {
+    const grid = document.getElementById('bgGrid');
+    const photos = allPhotoPaths();
+    const tiles = [];
+    for (let i = 0; i < 72; i++) tiles.push(photos[i % photos.length]);
+    grid.innerHTML = tiles.map((src) => `<img src="${src}" loading="lazy" alt="" />`).join('');
+  })();
+
   const root = document.getElementById('decks');
   const catNav = document.getElementById('catNav');
 

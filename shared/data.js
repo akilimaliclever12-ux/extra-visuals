@@ -74,6 +74,12 @@ const PHOTO_LIBRARY = {
   other: ["other-1.jpg", "other-2.jpg", "other-3.jpg", "other-4.jpg"],
 };
 
+function allPhotoPaths() {
+  return Object.values(PHOTO_LIBRARY)
+    .flat()
+    .map((file) => `assets/photos/${file}`);
+}
+
 function itemsFor(cat, count) {
   const real = cat.kind === "photo" ? PHOTO_LIBRARY[cat.key] : null;
   if (real && real.length) {

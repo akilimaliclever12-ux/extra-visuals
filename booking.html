@@ -90,6 +90,8 @@
 </head>
 <body data-lang="fr">
 
+<div class="bg-grid" id="bgGrid" aria-hidden="true"></div>
+
 <div class="topbar">
   <a class="brand" href="variant-c.html">Extra Visuals</a>
   <button class="lang-toggle" id="langBtn">EN</button>
@@ -193,7 +195,16 @@
   </div>
 </div>
 
+<script src="shared/data.js"></script>
 <script>
+  (function populateBgGrid() {
+    const grid = document.getElementById('bgGrid');
+    const photos = allPhotoPaths();
+    const tiles = [];
+    for (let i = 0; i < 72; i++) tiles.push(photos[i % photos.length]);
+    grid.innerHTML = tiles.map((src) => `<img src="${src}" loading="lazy" alt="" />`).join('');
+  })();
+
   document.getElementById('langBtn').addEventListener('click', () => {
     const b = document.body;
     const next = b.getAttribute('data-lang') === 'fr' ? 'en' : 'fr';
